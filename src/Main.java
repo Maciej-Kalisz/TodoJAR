@@ -48,18 +48,63 @@ public class Main {
         System.out.println("Welcome to TodoJAR!");
         System.out.println("""
                 Your options are:\s
-                [1] Check outstanding tasks
-                [2] Create a new task""");
+                [1] Check all tasks
+                [2] Check outstanding tasks
+                [3] Create a new task
+                [4] Mark as complete
+                """);
         br();
 
         int answer = getIntInput(kbInput, "Which option would you like? ");
 
         switch(answer) {
             case 1:
-                // TODO: Check outstanding tasks
-                System.out.println("Check outstanding tasks");
+                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:TodoJAR.sqlite")) {
+                    String query = "SELECT * FROM tasks";
+
+                    PreparedStatement stm = conn.prepareStatement(query);
+                    stm.execute();
+                    ResultSet rs = stm.getResultSet();
+
+                    while(rs.next()) {
+                        System.out.format("%-4s | %-15s | %-15s | %-30s | %-15s\n", "ID", "Task Name", "Description", "Deadline", "Completed?");
+                        System.out.format("%-4s | %-15s | %-15s | %-30s | %-15s\n",
+                                rs.getInt("taskId"),
+                                rs.getString("name"),
+                                rs.getString("description"),
+                                rs.getString("deadline"),
+                                rs.getInt("completed")
+                        );
+                    }
+                } catch (SQLException e) {
+                    System.out.println(e.getMessage());
+                }
+
                 break;
             case 2:
+                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:TodoJAR.sqlite")) {
+                    String query = "SELECT * FROM tasks WHERE completed = 0";
+
+                    PreparedStatement stm = conn.prepareStatement(query);
+                    stm.execute();
+                    ResultSet rs = stm.getResultSet();
+
+                    while(rs.next()) {
+                        System.out.format("%-4s | %-15s | %-15s | %-30s\n", "ID", "Task Name", "Description", "Deadline");
+                        System.out.format("%-4s | %-15s | %-15s | %-30s\n",
+                                rs.getInt("taskId"),
+                                rs.getString("name"),
+                                rs.getString("description"),
+                                rs.getString("deadline")
+                        );
+                    }
+
+                } catch (SQLException e) {
+                    System.out.println(e.getMessage());
+                }
+
+                break;
+            case 3:
                 System.out.println("What should the new task be called?");
                 String taskName = kbInput.nextLine();
 
@@ -86,13 +131,42 @@ public class Main {
                     stm.setString(2, description);
                     stm.setString(3, String.valueOf(deadline));
                     stm.execute();
-                } catch (Exception e) {
+                } catch (SQLException e) {
+                    System.out.println(e.getMessage());
+                }
+
+                break;
+            case 4:
+                int toMark = getIntInput(kbInput, "Which task would you like to mark? ");
+
+                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:TodoJAR.sqlite")) {
+                    String idQuery = "SELECT taskId FROM tasks";
+                    String updateQuery = "UPDATE tasks SET completed = 1 WHERE taskId = ?";
+
+                    ResultSet rs = conn.prepareStatement(idQuery).executeQuery();
+
+                    while (rs.next()) {
+                        if (rs.getInt("taskId") == toMark) {
+                            PreparedStatement updateStm = conn.prepareStatement(updateQuery);
+                            updateStm.setInt(1, toMark);
+                            updateStm.execute();
+
+                            System.out.println("Task has been marked as complete!");
+
+                            break;
+                        }
+
+                        System.out.println("No such task has been found.");
+                    }
+                } catch (SQLException e) {
                     System.out.println(e.getMessage());
                 }
 
                 break;
             default:
                 System.out.println("That input has not been recognised");
+
+                break;
         }
     }
     static void br() {
