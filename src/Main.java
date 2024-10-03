@@ -2,6 +2,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Date;
 import java.util.Scanner;
 
 public class Main {
@@ -20,10 +21,25 @@ public class Main {
         }
     }
 
+    static Date parseDate(String s) {
+        Date d;
+
+        String[] parts = s.split("/");
+        int[] parsed = new int[3];
+
+        if (parts.length != 3) { System.out.println("Wrong input given!"); throw new IllegalArgumentException(); }
+
+        for (int i = 0; i < parts.length; i++) {
+             parsed[i] = Integer.parseInt(parts[i]);
+        }
+
+        return new Date(parsed[2] - 1900, parsed[1] -1, parsed[0]);
+    }
+
     public static void main(String[] args) {
         Scanner kbInput = new Scanner(System.in);
 
-        String url = "jdbc:sqlite:/TodoJAR.sqlite";
+        String url = "jdbc:sqlite:TodoJAR.sqlite";
 
         try {
             Connection conn = DriverManager.getConnection(url);
@@ -53,8 +69,24 @@ public class Main {
                 System.out.println("Check outstanding tasks");
                 break;
             case 2:
-                System.out.println("Create a new task");
-                // TODO: Create a new task
+                System.out.println("What should the new task be called?");
+                String taskName = kbInput.nextLine();
+
+                System.out.println("What should the task description be? ");
+                String description = kbInput.nextLine();
+
+                Date d;
+                while (true) {
+                    try {
+                        System.out.println("What's the deadline for this task? ");
+                        d = parseDate(kbInput.nextLine());
+                        break;
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("Wrong input given!");
+                    }
+                }
+                System.out.println(d);
+
                 break;
             default:
                 System.out.println("That input has not been recognised");
