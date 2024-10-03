@@ -1,9 +1,16 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.Date;
 import java.util.Scanner;
+
+/*
+CREATE TABLE IF NOT EXISTS tasks (
+     taskID INTEGER PRIMARY KEY AUTOINCREMENT,
+     name TEXT NOT NULL,
+     description TEXT,
+     deadline DATETIME,
+     completed INTEGER NOT NULL
+)
+*/
 
 public class Main {
     static int getIntInput(Scanner s, String... q) {
@@ -22,8 +29,6 @@ public class Main {
     }
 
     static Date parseDate(String s) {
-        Date d;
-
         String[] parts = s.split("/");
         int[] parsed = new int[3];
 
@@ -38,20 +43,6 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner kbInput = new Scanner(System.in);
-
-        String url = "jdbc:sqlite:TodoJAR.sqlite";
-
-        try {
-            Connection conn = DriverManager.getConnection(url);
-            Statement stm = conn.createStatement();
-
-            stm.execute("SELECT * FROM sqlite_master WHERE type='table'");
-
-            System.out.print("Connection successful");
-
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
 
         br();
         System.out.println("Welcome to TodoJAR!");
@@ -75,25 +66,36 @@ public class Main {
                 System.out.println("What should the task description be? ");
                 String description = kbInput.nextLine();
 
-                Date d;
+                Date deadline;
                 while (true) {
                     try {
                         System.out.println("What's the deadline for this task? ");
-                        d = parseDate(kbInput.nextLine());
+                        deadline = parseDate(kbInput.nextLine());
                         break;
                     } catch (IllegalArgumentException e) {
                         System.out.println("Wrong input given!");
                     }
                 }
-                System.out.println(d);
+                System.out.println(deadline);
+
+                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:TodoJAR.sqlite")) {
+                    String query = "INSERT INTO tasks(name, description, deadline, completed) VALUES (?, ?, ?, 0)";
+
+                    PreparedStatement stm = conn.prepareStatement(query);
+                    stm.setString(1, taskName);
+                    stm.setString(2, description);
+                    stm.setString(3, String.valueOf(deadline));
+                    stm.execute();
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
 
                 break;
             default:
                 System.out.println("That input has not been recognised");
         }
     }
-
-    public static void br() {
+    static void br() {
         System.out.println("\n-----------------------------------\n");
     }
 }
