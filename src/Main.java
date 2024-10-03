@@ -1,5 +1,7 @@
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Scanner;
 
 public class Main {
@@ -21,13 +23,16 @@ public class Main {
     public static void main(String[] args) {
         Scanner kbInput = new Scanner(System.in);
 
-        String url = "jdbc:sqlite:TodoJAR.sqlite";
+        String url = "jdbc:sqlite:/TodoJAR.sqlite";
 
-        try (var conn = DriverManager.getConnection(url);
-             var stmt = conn.createStatement()) {
-            // create a new table
-            stmt.execute("SELECT * FROM sqlite_master");
-            System.out.println("Opened database successfully!");
+        try {
+            Connection conn = DriverManager.getConnection(url);
+            Statement stm = conn.createStatement();
+
+            stm.execute("SELECT * FROM sqlite_master WHERE type='table'");
+
+            System.out.print("Connection successful");
+
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -35,7 +40,7 @@ public class Main {
         br();
         System.out.println("Welcome to TodoJAR!");
         System.out.println("""
-                Your three options are:\s
+                Your options are:\s
                 [1] Check outstanding tasks
                 [2] Create a new task""");
         br();
@@ -45,8 +50,12 @@ public class Main {
         switch(answer) {
             case 1:
                 // TODO: Check outstanding tasks
+                System.out.println("Check outstanding tasks");
+                break;
             case 2:
+                System.out.println("Create a new task");
                 // TODO: Create a new task
+                break;
             default:
                 System.out.println("That input has not been recognised");
         }
